@@ -3,15 +3,37 @@
 int main()
 {
 int a, b, c; 
-scanf("%d", &a)
+scanf("%d", &a);
 scanf("%d", &b);
-scanf("%d", &c)
+scanf("%d", &c);
 printf("%d\n",a);
-//printf("%d\n",b);
-printf("%d\n",c);
+printf("%d",b);
 
 return 0;
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

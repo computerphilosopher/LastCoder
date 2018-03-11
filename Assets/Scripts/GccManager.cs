@@ -91,9 +91,7 @@ class GccManager : MonoBehaviour
         writer.WriteLine(inputString);
 
         writer.Close();
-
-    }
-
+ } 
     public void Compile()
     {
         WriteCFile();
@@ -116,13 +114,13 @@ class GccManager : MonoBehaviour
     private void Excute()
     {
         excuteProcess = new Process();
-        excuteProcess.StartInfo = new ProcessStartInfo(relativePath+ "/redir_input.bat", relativePath);
+        excuteProcess.StartInfo = new ProcessStartInfo(relativePath+ "/redir_input.bat", relativePath + " " + parser.InputPath);
         excuteProcess.StartInfo.RedirectStandardError = true;
         excuteProcess.StartInfo.RedirectStandardOutput = true;
 
         excuteProcess.StartInfo.CreateNoWindow = true;
         excuteProcess.StartInfo.UseShellExecute =false;
-        //File.Delete(relativePath + "/test.txt");
+        //File.Delete(relativePath + "/output.txt");
 
         excuteProcess.Start();
         excuteProcess.WaitForExit(1000);
@@ -130,7 +128,7 @@ class GccManager : MonoBehaviour
         outputText = File.ReadAllText(relativePath + "/output.txt");
 
         stdOut.text = outputText;
-        File.Delete(relativePath + "/test.txt");
+        File.Delete(relativePath + "/output.txt");
 
  
     }
@@ -138,7 +136,7 @@ class GccManager : MonoBehaviour
     private void Marking()
     {
         Text resultMessage = GameObject.Find("Result").GetComponentInChildren<Text>();
-        Marker marker = new Marker(outputText , relativePath + "/answer.txt");
+        Marker marker = new Marker(outputText , parser.AnswerPath);
 
         resultMessage.text = marker.ShowResult();
 
@@ -153,24 +151,25 @@ class GccManager : MonoBehaviour
     public class Marker
     {
         private string userSubmission;
-        private string AnswerPath;
-        private string Answer;
+        private string answerPath;
+        private string answer;
 
         string result;
 
-        public Marker(string userSubmission, string AnswerPath)
+        public Marker(string userSubmission, string answerPath)
         {
             this.userSubmission = userSubmission;
-            this.AnswerPath = AnswerPath;
+            this.answerPath = answerPath;
 
-            Answer = File.ReadAllText(AnswerPath);
+            answer = File.ReadAllText(this.answerPath);
+            UnityEngine.Debug.Log(userSubmission.Equals(answer));
 
         }
 
 
         private bool IsCorrect()
         {
-            if (userSubmission.Equals(Answer))
+            if (userSubmission.Equals(answer))
             {
                 return true;
             }
@@ -190,7 +189,7 @@ class GccManager : MonoBehaviour
                 result = "시간 초과";
             }
 
-            else if (userSubmission.Equals(Answer))
+            else if (userSubmission.Equals(answer))
             {
                 result = "정답입니다.";
             }
@@ -211,7 +210,7 @@ class GccManager : MonoBehaviour
         string dbPath;
         private string sourcePath;
         private string inputPath;
-        string outputPath;
+        string answerPath;
 
         public DBParser(int problemNumber, string dirPath)
         {
@@ -236,7 +235,7 @@ class GccManager : MonoBehaviour
 
             sourcePath = dirPath + dataReader.GetString(0);
             inputPath = dirPath + dataReader.GetString(1);
-            outputPath = dirPath + dataReader.GetString(2);
+            answerPath = dirPath + dataReader.GetString(2);
 
             dataReader.Close();
             dataReader = null;
@@ -254,9 +253,9 @@ class GccManager : MonoBehaviour
             get { return inputPath; }
         }
 
-        public string OutputPath
+        public string AnswerPath
         {
-            get { return inputPath; }
+            get { return answerPath; }
         }
 
         public string SourcePath
