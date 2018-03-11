@@ -41,13 +41,14 @@ class GccManager : MonoBehaviour
         stdOut = GameObject.Find("Output").GetComponentInChildren<Text>();
         stdOut.text = "initial text";
  
+        parser = new DBParser(problemNumber, relativePath+"/");
+
         codingField = GameObject.Find("InputField").GetComponent<InputField>();
         codingField.text= ReadDefaultText();
 
         submitButton = GetSubmitButton();
         submitButton.onClick.AddListener(ButtonListener);
 
-        parser = new DBParser(problemNumber, relativePath+"/");
 
     }
 
@@ -70,7 +71,7 @@ class GccManager : MonoBehaviour
 
     private string ReadDefaultText()
     {
-        StreamReader reader = new StreamReader(relativePath + "/test.c");
+        StreamReader reader = new StreamReader(parser.SourcePath);
         string fileText = reader.ReadToEnd();
         //UnityEngine.Debug.Log(fileText);
 
@@ -208,31 +209,61 @@ class GccManager : MonoBehaviour
     struct DBParser
     {
         string dbPath;
-        string sourcePath;
-        string inputPath;
+        private string sourcePath;
+        private string inputPath;
         string outputPath;
 
         public DBParser(int problemNumber, string dirPath)
         {
-            dbPath = dirPath + "/Problem";
-            IDbConnection dbConnection = (IDbConnection)new SqliteConnection(dbPath);
+            //dbPath = dirPath + "Problem";
+            dbPath = "URI=file:" + dirPath + "Problem.db";
+
+            UnityEngine.Debug.Log(dbPath);
+            IDbConnection dbConnection = (IDbConnection) new SqliteConnection(dbPath);
 
             dbConnection.Open();
 
             IDbCommand dbCommand = dbConnection.CreateCommand();
 
-            string sqlQuery = "select" + "sourcePath, inputPath, answerPath" + "from problem" + "where" + "problemNumber=" + problemNumber;
+            string sqlQuery = "select " + "sourcePath, inputPath, answerPath " + "from Problem " + "where " + "problemNumber=" + problemNumber + ";";
+            UnityEngine.Debug.Log(sqlQuery);
 
             dbCommand.CommandText = sqlQuery;
 
             IDataReader dataReader = dbCommand.ExecuteReader();
 
-            sourcePath = dirPath + dataReader.GetString(0);  
-            inputPath = dirPath + dataReader.GetString(1);  
-            outputPath = dirPath + dataReader.GetString(2);  
- 
+            dataReader.Read();
+
+            sourcePath = dirPath + dataReader.GetString(0);
+            inputPath = dirPath + dataReader.GetString(1);
+            outputPath = dirPath + dataReader.GetString(2);
+
+            dataReader.Close();
+            dataReader = null;
+
+            dbCommand.Dispose();
+            dbCommand = null;
+
+            dbConnection.Close();
+            dbConnection = null;
+
         }
 
-    } 
+        public string InputPath
+        {
+            get { return inputPath; }
+        }
+
+        public string OutputPath
+        {
+            get { return inputPath; }
+        }
+
+        public string SourcePath
+        {
+            get { return sourcePath; }
+        }
+
+    }
 
 }
