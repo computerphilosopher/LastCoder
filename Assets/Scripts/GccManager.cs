@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.IO;
+using System.Data;
+using Mono.Data.SqliteClient;
 
 using System.Diagnostics;
 
@@ -15,16 +17,18 @@ class GccManager : MonoBehaviour
     private Process compileProcess;
     private Process excuteProcess;
     private string relativePath;
+    public int problemNumber;
  
     private Button submitButton;
 
     private Text errorMsg;
     private Text stdOut;
-    string outputText;
-    //StringBuilder outputText;
 
+    private string outputText;
     private InputField codingField;
- 
+
+    DBParser parser;
+
     void Start()
     {
 
@@ -41,8 +45,9 @@ class GccManager : MonoBehaviour
         codingField.text= ReadDefaultText();
 
         submitButton = GetSubmitButton();
-
         submitButton.onClick.AddListener(ButtonListener);
+
+        parser = new DBParser(problemNumber, relativePath+"/");
 
     }
 
@@ -106,14 +111,7 @@ class GccManager : MonoBehaviour
         compileProcess.WaitForExit();
 
     }
-
-    public void testWrite()
-    {
-        FileStream writestream = new FileStream(relativePath + "/input.ck", FileMode.Create);
-        writestream.WriteByte(30);
-        writestream.Close();
-    }
-
+ 
     private void Excute()
     {
         excuteProcess = new Process();
@@ -130,10 +128,6 @@ class GccManager : MonoBehaviour
  
         outputText = File.ReadAllText(relativePath + "/output.txt");
 
-        string ot = excuteProcess.StandardOutput.ReadToEnd();
-        string er = excuteProcess.StandardError.ReadToEnd();
-        UnityEngine.Debug.Log(ot);
-        UnityEngine.Debug.Log(er);
         stdOut.text = outputText;
         File.Delete(relativePath + "/test.txt");
 
@@ -206,9 +200,39 @@ class GccManager : MonoBehaviour
             }
 
             return result;
- 
+
         }
 
     }
+
+    struct DBParser
+    {
+        string dbPath;
+        string sourcePath;
+        string inputPath;
+        string outputPath;
+
+        public DBParser(int problemNumber, string dirPath)
+        {
+            dbPath = dirPath + "/Problem";
+            IDbConnection dbConnection = (IDbConnection)new SqliteConnection(dbPath);
+
+            dbConnection.Open();
+
+            IDbCommand dbCommand = dbConnection.CreateCommand();
+
+            string sqlQuery = "select" + "sourcePath, inputPath, answerPath" + "from problem" + "where" + "problemNumber=" + problemNumber;
+
+            dbCommand.CommandText = sqlQuery;
+
+            IDataReader dataReader = dbCommand.ExecuteReader();
+
+            sourcePath = dirPath + dataReader.GetString(0);  
+            inputPath = dirPath + dataReader.GetString(1);  
+            outputPath = dirPath + dataReader.GetString(2);  
+ 
+        }
+
+    } 
 
 }
